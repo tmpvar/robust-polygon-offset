@@ -3,6 +3,9 @@
     "beefy": "^2.1.1"
   },
   "dependencies": {
-    "robust-orientation": "^1.1.3"
+    "exact-segment-intersect": "^1.0.0",
+    "robust-estimate-float": "^1.0.0",
+    "robust-orientation": "^1.1.3",
+    "two-sum": "^1.0.0"
   }
 }
