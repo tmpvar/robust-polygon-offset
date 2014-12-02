@@ -1,6 +1,7 @@
 var orient = require('robust-orientation')[3];
 var sum = require('two-sum');
-var segseg = require('exact-segment-intersect');
+// var segseg = require('exact-segment-intersect');
+var segseg = require('segseg');
 var float = require('robust-estimate-float');
 
 module.exports = offsetPolygon;
@@ -46,6 +47,8 @@ function offsetLines(sc, amount) {
   //       Perhaps using rational numbers would help in the normalization
   //       case, and finding a different way to compute the offset vector
   //       may eliminated the calls to sqrt
+  //
+  //       options: minkowski sum
 
   var positions = sc.positions;
   var edges = sc.edges;
@@ -57,15 +60,13 @@ function offsetLines(sc, amount) {
   var elen = edges.length;
   var out = {
     positions: [],
-    cells: []
+    edges: [],
+    isects: []
   }
 
   for (var i=0; i<elen; i++) {
     var a = positions[edges[i][0]];
     var b = positions[edges[i][1]];
-
-    // var dx = sum(b[0], -a[0]);
-    // var dy = sum(b[1], -a[1]);
 
     var dx = b[0] - a[0];
     var dy = b[1] - a[1];
@@ -77,47 +78,81 @@ function offsetLines(sc, amount) {
     xperp = (xperp * amount)/length;
     yperp = (yperp * amount)/length;
 
-    var o1 = [
-      a[0] + xperp,
-      a[1] + yperp,
-    ];
+    out.positions.push([a[0] + xperp, a[1] + yperp]);
+    out.positions.push([b[0] + xperp, b[1] + yperp]);
 
-    var o2 = [
-      b[0] + xperp,
-      b[1] + yperp,
-    ];
-
-    if (!convex[edges[i][0]]) {
-      var lastEdge = out.cells[out.cells.length-1];
-      var isect = segseg(
-        o1,
-        o2,
-        out.positions[lastEdge[0]],
-        out.positions[lastEdge[1]]
-      );
-      o1[0] = float(isect[0])/isect[2];
-      o1[1] = float(isect[1])/isect[2];
-      out.positions.pop();
+    if (!convex[edges[i][1]]) {
+      out.isects.push([
+        out.edges.length ? out.edges.length-1 : elen-1,
+        out.edges.length
+      ]);
     }
 
-    out.positions.push(o1);
-    out.positions.push(o2);
-
-    out.cells.push([out.positions.length-2, out.positions.length-1]);
+    out.edges.push([
+      out.positions.length-2,
+      out.positions.length-1
+    ]);
   }
 
-  out.cells.push([out.positions.length-1, 0]);
+  // out.positions.map(function(p) {
+  //   console.log(p.join(', '));
+  // })
 
-  return out;
+// console.log(out);
+  // close the polygon
+  // out.edges[out.edges.length-1][1] = 0;
+
+  handleLocalInterference(out);
+  out.edges.map(function(edge) {
+    edge.map(function(pos) {
+      console.log(out.positions[pos].join(', '))
+    });
+  });
+
+  // console.log('..')
+  // positions.map(function(position) {
+  //   console.log(position.join(', '))
+  // })
+  // console.log(positions[0].join(', '))
 }
 
 
-console.log(
+function handleLocalInterference(sc) {
+  var p = sc.positions;
+  sc.edges.forEach(function(current, i) {
+    var next = sc.edges[i<sc.edges.length-1 ? i+1 : 0];
+
+    var a = p[current[0]];
+    var b = p[current[1]];
+    var c = p[next[0]];
+    var d = p[next[1]];
+
+    var isect = segseg(a[0], a[1], b[0], b[1], c[0], c[1], d[0], d[1]);
+
+    if (isect) {
+      // update the position
+      p[current[1]][0] = isect[0];
+      p[current[1]][1] = isect[1];
+
+      // update the topology
+      next[0] = current[1];
+
+      // TODO: remove p[next[0]] or do this before creating the SC
+    }
+    return true;
+  });
+}
+
+  // offsetPolygon([
+  //   [-10,  10],
+  //   [-10, -10],
+  //   [  0, 0],
+  // ], -1)
+
   offsetPolygon([
     [-10,  10],
     [-10, -10],
     [  0, -5],
     [ 10, -10],
     [ 10,  10]
-  ], 5)
-);
+  ], -1)
