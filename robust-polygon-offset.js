@@ -75,6 +75,7 @@ function offsetLines(sc, amount) {
     var yperp = -dx;
 
     var length = Math.sqrt(xperp * xperp + yperp * yperp);
+
     xperp = (xperp * amount)/length;
     yperp = (yperp * amount)/length;
 
@@ -101,7 +102,7 @@ function offsetLines(sc, amount) {
 // console.log(out);
   // close the polygon
   // out.edges[out.edges.length-1][1] = 0;
-
+console.log(out);
   handleLocalInterference(out);
   out.edges.map(function(edge) {
     edge.map(function(pos) {
@@ -126,7 +127,7 @@ function handleLocalInterference(sc) {
     var b = p[current[1]];
     var c = p[next[0]];
     var d = p[next[1]];
-
+console.log(a[0], a[1], b[0], b[1], c[0], c[1], d[0], d[1]);
     var isect = segseg(a[0], a[1], b[0], b[1], c[0], c[1], d[0], d[1]);
 
     if (isect) {
@@ -149,10 +150,31 @@ function handleLocalInterference(sc) {
   //   [  0, 0],
   // ], -1)
 
-  offsetPolygon([
-    [-10,  10],
-    [-10, -10],
-    [  0, -5],
-    [ 10, -10],
-    [ 10,  10]
-  ], -1)
+  // offsetPolygon([
+  //   [-10,  10],
+  //   [-10, -10],
+  //   [  0, -5],
+  //   [ 10, -10],
+  //   [ 10,  10]
+  // ], -1)
+
+offsetPolygon([
+  [-100, -100],
+  [100, -100],
+  [200, -200],
+  [100, 0],
+  [300, 0],
+  [350, -100],
+  [350, -200],
+  [275, -300],
+  [600, -300],
+  [400, -200],
+  [400, -150],
+  [600, -100],
+  [500, 200],
+  [300, 100],
+  [100, 200],
+  [-100, 100],
+  [-100, 0],
+], -50);
+
